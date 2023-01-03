@@ -1,24 +1,46 @@
+use clap::Parser;
+use rand::prelude::*;
+
 const LENGHT_KEY: usize = 19;
 
-fn main() {
-    let mut not_rock : Vec<u8>  = vec![0,1,2,3,4,5,8,9,10,13,14,15,16,17,18];
-    let seed : u64 = 655410560001451541;
-    let mut combinations : u64 = 1;
-    let mut key : [char; LENGHT_KEY] = ['h';LENGHT_KEY];
-    println!("Hello keygen!");
+/// Simple program to generate keys
+#[derive(Parser, Debug)]
+#[command(author="Louis Moreau", version, about="A key generator for crackme05", long_about = None)]
+struct Args {
 
+    /// Display the number of possible keys
+    #[arg(short, long)]
+    display_count: bool,
+
+    /// Number of key to generate
+    #[arg(short, long, default_value_t = 1)]
+    number: u32,
+}
+
+
+fn main() {
+    let not_rock : Vec<u8>  = vec![0,1,2,3,4,5,8,9,10,13,14,15,16,17,18];
+    let mut rng = rand::thread_rng();
+
+    let args = Args::parse();
 
     let letters = get_rock_letters();
-    //println!("{:?}",letters);
-    combinations *= solve_rock(&not_rock,&letters,&mut key,seed);
-    combinations *= solve_paper(&letters,&mut key,seed / combinations);
-    combinations *= solve_scissors(&letters,&mut key,seed / combinations);
-    combinations *= solve_cracker(&letters,&mut key,seed / combinations);
+    
+    for _i in 0..args.number {
+        let mut combinations : u64 = 1;
+        let seed : u64 = rng.next_u64();
+        let mut key : [char; LENGHT_KEY] = ['h';LENGHT_KEY];
+        combinations *= solve_rock(&not_rock,&letters,&mut key,seed);
+        combinations *= solve_paper(&letters,&mut key,seed / combinations);
+        combinations *= solve_scissors(&letters,&mut key,seed / combinations);
+        solve_cracker(&letters,&mut key,seed / combinations);
+        let key_string: String =  key.iter().collect();
+        println!("{}",key_string);
+    }
 
-
-
-    let key_string: String =  key.iter().collect();
-    println!("key : {}\ncombinaisons : {}",key_string,combinations);
+    if args.display_count {
+        println!("Possible combinations : {}",combinations_rock(&not_rock,&letters) * combinations_paper(&letters) * combinations_paper(&letters) * combinations_scissors(&letters) * combinations_cracker(&letters));
+    }
 }
 
 
