@@ -12,6 +12,9 @@ struct Args {
     #[arg(short, long)]
     display_count: bool,
 
+    #[arg(short, long)]
+    seq_seed: Option<u64>,
+
     /// Number of key to generate
     #[arg(short, long, default_value_t = 1)]
     number: u32,
@@ -21,14 +24,22 @@ struct Args {
 fn main() {
     let not_rock : Vec<u8>  = vec![0,1,2,3,4,5,8,9,10,13,14,15,16,17,18];
     let mut rng = rand::thread_rng();
+    let mut seed : u64;
+    let mut is_rand = true;
 
     let args = Args::parse();
+
+    if let Some(s) = args.seq_seed {
+        seed = s;
+        is_rand = false;
+    }else {
+        seed = rng.next_u64();
+    }
 
     let letters = get_rock_letters();
     
     for _i in 0..args.number {
         let mut combinations : u64 = 1;
-        let seed : u64 = rng.next_u64();
         let mut key : [char; LENGHT_KEY] = ['h';LENGHT_KEY];
         combinations *= solve_rock(&not_rock,&letters,&mut key,seed);
         combinations *= solve_paper(&letters,&mut key,seed / combinations);
@@ -36,6 +47,11 @@ fn main() {
         solve_cracker(&letters,&mut key,seed / combinations);
         let key_string: String =  key.iter().collect();
         println!("{}",key_string);
+        if is_rand {
+            seed = rng.next_u64();
+        } else {
+            seed += 1;
+        }
     }
 
     if args.display_count {
