@@ -13,7 +13,7 @@ struct Args {
     display_count: bool,
 
     #[arg(short, long)]
-    seq_seed: Option<u64>,
+    seq_seed: Option<u128>,
 
     /// Number of key to generate
     #[arg(short, long, default_value_t = 1)]
@@ -24,7 +24,7 @@ struct Args {
 fn main() {
     let not_rock : Vec<u8>  = vec![0,1,2,3,4,5,8,9,10,13,14,15,16,17,18];
     let mut rng = rand::thread_rng();
-    let mut seed : u64;
+    let mut seed : u128;
     let mut is_rand = true;
 
     let args = Args::parse();
@@ -33,13 +33,14 @@ fn main() {
         seed = s;
         is_rand = false;
     }else {
-        seed = rng.next_u64();
+        seed = rng.next_u64() as u128;
     }
 
     let letters = get_rock_letters();
+    //println!("{:?}",letters);
     
     for _i in 0..args.number {
-        let mut combinations : u64 = 1;
+        let mut combinations : u128 = 1;
         let mut key : [char; LENGHT_KEY] = ['h';LENGHT_KEY];
         combinations *= solve_rock(&not_rock,&letters,&mut key,seed);
         combinations *= solve_paper(&letters,&mut key,seed / combinations);
@@ -48,7 +49,7 @@ fn main() {
         let key_string: String =  key.iter().collect();
         println!("{}",key_string);
         if is_rand {
-            seed = rng.next_u64();
+            seed = rng.next_u64() as u128;
         } else {
             seed += 1;
         }
@@ -81,20 +82,20 @@ fn get_rock_letters() -> Vec<char> {
 }
 
 
-fn combinations_rock(not_rock : &Vec<u8> ,letters : &Vec<char>) -> u64 {
-    let mut combinations: u64 = 0;
+fn combinations_rock(not_rock : &Vec<u8> ,letters : &Vec<char>) -> u128 {
+    let mut combinations: u128 = 1;
     for i in 0..LENGHT_KEY {
         if !not_rock.contains(&(i as u8)) {
-            combinations += letters.len() as u64;
+            combinations *= letters.len() as u128;
         }
     }
     return combinations;
 }
 
-fn combinations_paper(letters : &Vec<char>) -> u64 {
+fn combinations_paper(letters : &Vec<char>) -> u128 {
     let mut char1 : char;
     let mut char2 : char;
-    let mut combinations: u64 = 0;
+    let mut combinations: u128 = 0;
     for i in 0..letters.len() {
         char1 = letters[i];
         for j in 0..letters.len() {
@@ -109,9 +110,9 @@ fn combinations_paper(letters : &Vec<char>) -> u64 {
     return combinations;
 }
 
-fn combinations_scissors(letters : &Vec<char>) -> u64 {
+fn combinations_scissors(letters : &Vec<char>) -> u128 {
     let mut chars : [char;4] = ['l';4];
-    let mut combinations: u64 = 0;
+    let mut combinations: u128 = 0;
     
     for i in 0..letters.len() {
         chars[0] = letters[i];
@@ -135,9 +136,9 @@ fn combinations_scissors(letters : &Vec<char>) -> u64 {
     return combinations;
 }
 
-fn combinations_cracker(letters : &Vec<char>) -> u64 {
+fn combinations_cracker(letters : &Vec<char>) -> u128 {
     let mut chars : [char;3] = ['l';3];
-    let mut combinations: u64 = 0;
+    let mut combinations: u128 = 0;
     for i in 0..letters.len() {
         chars[0] = letters[i];
         for j in 0..letters.len() {
@@ -153,21 +154,21 @@ fn combinations_cracker(letters : &Vec<char>) -> u64 {
     return combinations;
 }
 
-fn solve_rock(not_rock : &Vec<u8> , letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
+fn solve_rock(not_rock : &Vec<u8> , letters : &Vec<char>,key : &mut [char;19],seed : u128) -> u128 {
     let combinations = combinations_rock(not_rock,letters);
     let mut m_seed = seed;
     for i in 0..LENGHT_KEY {
         if !not_rock.contains(&(i as u8)) {
-            key[i] = letters[(m_seed % letters.len() as u64) as usize];
-            m_seed /= letters.len() as u64;
+            key[i] = letters[(m_seed % letters.len() as u128) as usize];
+            m_seed /= letters.len() as u128;
         }
     }
     return combinations;
 }
 
-fn solve_paper(letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
+fn solve_paper(letters : &Vec<char>,key : &mut [char;19],seed : u128) -> u128 {
     let combinations = combinations_paper(letters);
-    let mut counter : u64 = 0;
+    let mut counter : u128 = 0;
     'outer: for i in 0..letters.len() {
         key[10] = letters[i];
         for j in 0..letters.len() {
@@ -184,7 +185,7 @@ fn solve_paper(letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
         }
     }
 
-    let mut counter : u64 = 0;
+    let mut counter : u128 = 0;
     'outer: for i in 0..letters.len() {
         key[13] = letters[i];
         for j in 0..letters.len() {
@@ -204,9 +205,9 @@ fn solve_paper(letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
     return combinations * combinations;
 }
 
-fn solve_scissors(letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
+fn solve_scissors(letters : &Vec<char>,key : &mut [char;19],seed : u128) -> u128 {
     let combinations = combinations_scissors(letters);
-    let mut counter : u64 = 0;
+    let mut counter : u128 = 0;
     'outer: for i in 0..letters.len() {
         key[2] = letters[i];
         for j in 0..letters.len() {
@@ -232,9 +233,9 @@ fn solve_scissors(letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
     return combinations;
 }
 
-fn solve_cracker(letters : &Vec<char>,key : &mut [char;19],seed : u64) -> u64 {
+fn solve_cracker(letters : &Vec<char>,key : &mut [char;19],seed : u128) -> u128 {
     let combinations = combinations_cracker(letters);
-    let mut counter : u64 = 0;
+    let mut counter : u128 = 0;
     'outer: for i in 0..letters.len() {
         key[14] = letters[i];
         for j in 0..letters.len() {
